@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sympto — API Tester</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --bg:#0d0d0d;--surface:#161616;--surface2:#1f1f1f;--surface3:#282828;
+      --border:#2a2a2a;--accent:#00d97e;--blue:#4f8ef7;--red:#ff4d4d;
+      --yellow:#f5a623;--text:#e2e2e2;--muted:#666;--radius:8px;
+    }
+    body{background:var(--bg);color:var(--text);font:14px/1.5 'Segoe UI',system-ui,sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+    /* ── Header ── */
+    header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
+    header h1{font-size:16px;color:var(--accent);letter-spacing:-.3px}
+    header .sep{color:var(--border)}
+    #base-url{background:var(--surface2);border:1px solid var(--border);color:var(--muted);padding:4px 8px;border-radius:5px;font-size:12px;width:220px;margin-left:auto}
+    #base-url:focus{outline:none;border-color:var(--accent);color:var(--text)}
+
+    /* ── Layout ── */
+    .layout{display:flex;flex:1;overflow:hidden}
+
+    /* ── Sidebar ── */
+    nav{width:200px;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;flex-shrink:0;padding:8px 0}
+    .nav-group{padding:4px 12px 6px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:8px}
+    .nav-item{display:flex;align-items:center;gap:8px;padding:7px 14px;color:var(--muted);cursor:pointer;border-left:2px solid transparent;font-size:13px;transition:.12s}
+    .nav-item:hover{color:var(--text);background:var(--surface2)}
+    .nav-item.active{color:var(--accent);border-left-color:var(--accent);background:rgba(0,217,126,.06)}
+
+    /* ── Main content ── */
+    main{flex:1;overflow-y:auto;padding:20px}
+    .panel{display:none}.panel.active{display:block}
+    .page-title{font-size:20px;font-weight:700;margin-bottom:2px}
+    .page-sub{color:var(--muted);font-size:13px;margin-bottom:20px}
+
+    /* ── Cards ── */
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:14px}
+    .card-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+    .badge{background:var(--accent);color:#000;font-size:10px;padding:1px 6px;border-radius:10px;font-weight:700}
+    .badge-blue{background:var(--blue);color:#fff}
+    .badge-red{background:var(--red);color:#fff}
+
+    /* ── Forms ── */
+    .row{margin-bottom:10px}
+    .row label{display:block;font-size:11px;color:var(--muted);margin-bottom:3px}
+    .row input,.row select,.row textarea{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:13px;outline:none;font-family:inherit}
+    .row input:focus,.row select:focus,.row textarea:focus{border-color:var(--accent)}
+    .row textarea{resize:vertical;min-height:72px}
+    select option{background:var(--surface2)}
+    .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+    .flex{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+    /* ── Checkboxes ── */
+    .checks{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+    .chk{display:flex;align-items:center;gap:5px;padding:5px 10px;border:1px solid var(--border);border-radius:5px;background:var(--surface2);cursor:pointer;font-size:12px;user-select:none;transition:.12s}
+    .chk:has(input:checked){border-color:var(--accent);color:var(--accent)}
+    .chk input{display:none}
+
+    /* ── Buttons ── */
+    .btn{padding:7px 14px;border-radius:6px;border:none;cursor:pointer;font-size:13px;font-weight:500;transition:.12s;font-family:inherit}
+    .btn-p{background:var(--accent);color:#000}.btn-p:hover{background:#00be6e}
+    .btn-s{background:var(--surface2);color:var(--text);border:1px solid var(--border)}.btn-s:hover{border-color:var(--accent);color:var(--accent)}
+    .btn-d{background:var(--red);color:#fff}.btn-d:hover{background:#e04040}
+    .btn-w{background:var(--yellow);color:#000}.btn-w:hover{filter:brightness(.9)}
+    .btn:disabled{opacity:.4;cursor:not-allowed}
+    .sm{padding:4px 9px;font-size:11px}
+
+    /* ── Alerts ── */
+    .alert{padding:9px 12px;border-radius:6px;font-size:12px;margin-bottom:10px}
+    .a-ok{background:rgba(0,217,126,.08);border:1px solid rgba(0,217,126,.25);color:var(--accent)}
+    .a-err{background:rgba(255,77,77,.08);border:1px solid rgba(255,77,77,.25);color:var(--red)}
+    .a-info{background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.25);color:#7aacff}
+    .a-warn{background:rgba(245,166,35,.08);border:1px solid rgba(245,166,35,.25);color:var(--yellow)}
+
+    /* ── Tokens ── */
+    .token-bar{background:rgba(0,217,126,.05);border:1px solid rgba(0,217,126,.18);border-radius:6px;padding:8px 12px;font-size:12px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+    .token-bar .ph{color:var(--accent);font-weight:600}
+
+    /* ── Steps ── */
+    .steps{display:flex;margin-bottom:20px}
+    .st{flex:1;text-align:center;padding:7px;font-size:11px;color:var(--muted);border-bottom:2px solid var(--border)}
+    .st.active{color:var(--accent);border-bottom-color:var(--accent)}
+    .st.done{border-bottom-color:#333}
+
+    /* ── Item cards ── */
+    .ic{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:8px}
+    .ic h4{font-size:13px;margin-bottom:3px}
+    .ic p{font-size:12px;color:var(--muted);margin-bottom:2px}
+    .ic .acts{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}
+
+    /* ── Status chips ── */
+    .chip{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700}
+    .c-p{background:rgba(245,166,35,.15);color:var(--yellow)}
+    .c-c{background:rgba(0,217,126,.15);color:var(--accent)}
+    .c-x{background:rgba(255,77,77,.15);color:var(--red)}
+
+    /* ── Option buttons (dates/times) ── */
+    .opts{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+    .opt{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 14px;border-radius:6px;cursor:pointer;font-size:12px;transition:.12s;font-family:inherit}
+    .opt:hover{border-color:var(--accent);color:var(--accent)}
+
+    /* ── Specialty pills ── */
+    .pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+    .pill{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 14px;border-radius:20px;cursor:pointer;font-size:12px;transition:.12s}
+    .pill:hover{border-color:var(--accent);color:var(--accent)}
+
+    /* ── Log panel ── */
+    .log{width:360px;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+    .log-hdr{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;color:var(--muted);flex-shrink:0}
+    .log-body{flex:1;overflow-y:auto;padding:8px}
+    .le{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:9px;margin-bottom:7px;font-size:11px}
+    .le-top{display:flex;align-items:center;gap:5px;margin-bottom:6px}
+    .method{padding:2px 6px;border-radius:3px;font-weight:700;font-size:10px}
+    .m-POST{background:rgba(79,142,247,.2);color:var(--blue)}
+    .m-GET{background:rgba(0,217,126,.2);color:var(--accent)}
+    .m-DELETE{background:rgba(255,77,77,.2);color:var(--red)}
+    .m-PUT{background:rgba(245,166,35,.2);color:var(--yellow)}
+    .le-path{color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .le-status{font-weight:700}.ok{color:var(--accent)}.err{color:var(--red)}
+    .le pre{font:10px/1.4 'Consolas',monospace;color:#999;white-space:pre-wrap;word-break:break-all;max-height:180px;overflow-y:auto;margin-top:4px}
+
+    /* ── Stat boxes ── */
+    .stat{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:14px;text-align:center}
+    .stat .val{font-size:28px;font-weight:800;color:var(--accent)}
+    .stat .lbl{font-size:11px;color:var(--muted);margin-top:2px}
+
+    /* scrollbar */
+    ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#2a2a2a;border-radius:3px}
+  </style>
+</head>
+<body>
+
+<!-- ════════════════ HEADER ════════════════ -->
+<header>
+  <h1>⚕ Sympto</h1>
+  <span class="sep">|</span>
+  <span style="color:var(--muted);font-size:12px">API Testing Interface</span>
+  <input id="base-url" type="text" value="http://localhost:8001" placeholder="http://localhost:8001" />
+</header>
+
+<div class="layout">
+
+<!-- ════════════════ SIDEBAR ════════════════ -->
+<nav>
+  <div class="nav-group">Patient</div>
+  <div class="nav-item active" data-panel="p-auth">🔐 Login</div>
+  <div class="nav-item" data-panel="p-profile">👤 Profile</div>
+  <div class="nav-item" data-panel="p-symptoms">🩺 Symptom Analysis</div>
+  <div class="nav-item" data-panel="p-browse">🔍 Browse Doctors</div>
+  <div class="nav-item" data-panel="p-appts">📅 My Appointments</div>
+
+  <div class="nav-group">Doctor</div>
+  <div class="nav-item" data-panel="d-auth">🔐 Login</div>
+  <div class="nav-item" data-panel="d-register">📝 Register</div>
+  <div class="nav-item" data-panel="d-appts">📅 Appointments</div>
+  <div class="nav-item" data-panel="d-clinic">🏥 Clinic & Vacation</div>
+
+  <div class="nav-group">Admin</div>
+  <div class="nav-item" data-panel="a-panel">⚙️ Admin Panel</div>
+
+  <div class="nav-group">Internal</div>
+  <div class="nav-item" data-panel="i-panel">⏰ Cron / Health</div>
+</nav>
+
+<!-- ════════════════ MAIN PANELS ════════════════ -->
+<main>
+
+  <!-- ─── PATIENT LOGIN ─── -->
+  <div id="p-auth" class="panel active">
+    <div class="page-title">Patient Login</div>
+    <div class="page-sub">Register or log in with your phone number</div>
+
+    <div id="p-token-bar" class="token-bar" style="display:none">
+      ✅ Logged in as <span class="ph" id="p-phone-lbl"></span>
+      &nbsp;<span id="p-user-lbl" style="color:var(--muted)"></span>
+      <button class="btn btn-s sm" style="margin-left:auto" onclick="clearAuth('p')">Logout</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Phone Number</div>
+      <div class="g2">
+        <div class="row"><label>Phone Number (E.164)</label><input id="p-phone" type="text" placeholder="919300499439" /></div>
+        <div class="row"><label>Language</label>
+          <select id="p-lang"><option value="english">English</option><option value="hinglish">Hinglish</option><option value="hindi">Hindi</option></select>
+        </div>
+      </div>
+      <button class="btn btn-p" onclick="patientLogin()">Login / Register</button>
+    </div>
+
+    <div class="card" id="p-session-card" style="display:none">
+      <div class="card-title">Quick Actions</div>
+      <div class="flex">
+        <button class="btn btn-s" onclick="call('GET','/api/patient/session',null,'p')">Get Session</button>
+        <button class="btn btn-s" onclick="call('GET','/api/patient/menu',null,'p')">Get Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── PATIENT PROFILE ─── -->
+  <div id="p-profile" class="panel">
+    <div class="page-title">Patient Profile</div>
+    <div class="page-sub">Create or update profile details</div>
+
+    <div class="card">
+      <div class="card-title">Profile Form</div>
+      <div class="g2">
+        <div class="row"><label>Full Name</label><input id="pf-name" placeholder="Rahul Sharma" /></div>
+        <div class="row"><label>Age</label><input id="pf-age" type="number" value="28" /></div>
+        <div class="row"><label>Gender</label>
+          <select id="pf-gender"><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option></select>
+        </div>
+        <div class="row"><label>State</label><input id="pf-state" value="madhya pradesh" /></div>
+        <div class="row"><label>City</label><input id="pf-city" value="indore" /></div>
+        <div class="row"><label>Pincode</label><input id="pf-pincode" value="452001" /></div>
+      </div>
+      <div class="flex" style="margin-top:10px">
+        <button class="btn btn-p" onclick="saveProfile()">Save Profile</button>
+        <button class="btn btn-s" onclick="call('GET','/api/patient/profile',null,'p')">Get Profile</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Change Language</div>
+      <div class="flex">
+        <select id="pf-lang-change" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:13px">
+          <option value="english">English</option><option value="hinglish">Hinglish</option><option value="hindi">Hindi</option>
+        </select>
+        <button class="btn btn-s" onclick="call('POST','/api/patient/language',{language:document.getElementById('pf-lang-change').value},'p')">Update</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── SYMPTOM ANALYSIS ─── -->
+  <div id="p-symptoms" class="panel">
+    <div class="page-title">Symptom Analysis</div>
+    <div class="page-sub">AI-powered doctor recommendation — multi-step flow</div>
+
+    <div class="steps">
+      <div class="st active" id="st1">1 · Symptoms</div>
+      <div class="st" id="st2">2 · Follow-up</div>
+      <div class="st" id="st3">3 · Doctors</div>
+      <div class="st" id="st4">4 · Date</div>
+      <div class="st" id="st5">5 · Time</div>
+      <div class="st" id="st6">6 · Booked</div>
+    </div>
+
+    <!-- Step 1 -->
+    <div id="ss1" class="card">
+      <div class="card-title">Describe Symptoms</div>
+      <div class="row"><label>Symptom Description</label>
+        <textarea id="sym-txt" placeholder="I have chest pain and shortness of breath for 2 days..."></textarea>
+      </div>
+      <button class="btn btn-p" onclick="submitSymptoms()">Analyze →</button>
+    </div>
+
+    <!-- Step 2 -->
+    <div id="ss2" class="card" style="display:none">
+      <div class="card-title">Follow-up Question <span class="badge" id="fup-cnt">1</span></div>
+      <div id="fup-emergency" class="alert a-err" style="display:none"></div>
+      <div id="fup-q" class="alert a-info" style="margin-bottom:10px"></div>
+      <div class="row"><label>Your Answer</label><textarea id="fup-ans" placeholder="Type answer here..."></textarea></div>
+      <button class="btn btn-p" onclick="submitFollowup()">Submit →</button>
+    </div>
+
+    <!-- Step 3 -->
+    <div id="ss3" class="card" style="display:none">
+      <div class="card-title">Recommended Doctors</div>
+      <div id="sym-rec-msg" class="alert a-info" style="display:none;margin-bottom:10px"></div>
+      <div id="sym-doctors"></div>
+    </div>
+
+    <!-- Step 4 -->
+    <div id="ss4" class="card" style="display:none">
+      <div class="card-title">Choose a Date</div>
+      <p id="sym-doc-name" style="color:var(--muted);font-size:12px;margin-bottom:8px"></p>
+      <div id="sym-dates" class="opts"></div>
+    </div>
+
+    <!-- Step 5 -->
+    <div id="ss5" class="card" style="display:none">
+      <div class="card-title">Choose a Time</div>
+      <p id="sym-date-lbl" style="color:var(--muted);font-size:12px;margin-bottom:8px"></p>
+      <div id="sym-times" class="opts"></div>
+    </div>
+
+    <!-- Step 6 -->
+    <div id="ss6" class="card" style="display:none">
+      <div class="card-title">✅ Appointment Requested</div>
+      <div id="sym-booked-msg" class="alert a-ok"></div>
+      <button class="btn btn-s" style="margin-top:8px" onclick="resetSymFlow()">Start New</button>
+    </div>
+  </div>
+
+  <!-- ─── BROWSE DOCTORS ─── -->
+  <div id="p-browse" class="panel">
+    <div class="page-title">Browse Doctors</div>
+    <div class="page-sub">Browse by specialty without symptom analysis</div>
+
+    <div class="card">
+      <div class="card-title">Specialties Near You</div>
+      <button class="btn btn-s" onclick="loadSpecialties()">Load Specialties</button>
+      <div id="spec-pills" class="pills"></div>
+    </div>
+
+    <div id="br-docs-card" class="card" style="display:none">
+      <div class="card-title">Doctors</div>
+      <div id="br-docs"></div>
+    </div>
+
+    <div id="br-dates-card" class="card" style="display:none">
+      <div class="card-title">Choose a Date</div>
+      <p id="br-doc-name" style="color:var(--muted);font-size:12px;margin-bottom:8px"></p>
+      <div id="br-dates" class="opts"></div>
+    </div>
+
+    <div id="br-times-card" class="card" style="display:none">
+      <div class="card-title">Choose a Time</div>
+      <div id="br-times" class="opts"></div>
+    </div>
+
+    <div id="br-booked-card" class="card" style="display:none">
+      <div class="card-title">✅ Appointment Requested</div>
+      <div id="br-booked-msg" class="alert a-ok"></div>
+      <button class="btn btn-s" style="margin-top:8px" onclick="resetBrowse()">Browse Again</button>
+    </div>
+  </div>
+
+  <!-- ─── MY APPOINTMENTS ─── -->
+  <div id="p-appts" class="panel">
+    <div class="page-title">My Appointments</div>
+    <div class="page-sub">View and cancel your appointments</div>
+    <div class="card">
+      <button class="btn btn-p" onclick="loadPatientAppts()">Load Appointments</button>
+      <div id="p-appts-list" style="margin-top:14px"></div>
+    </div>
+  </div>
+
+  <!-- ─── DOCTOR LOGIN ─── -->
+  <div id="d-auth" class="panel">
+    <div class="page-title">Doctor Login</div>
+    <div class="page-sub">Register or log in as a doctor</div>
+
+    <div id="d-token-bar" class="token-bar" style="display:none">
+      ✅ Doctor logged in as <span class="ph" id="d-phone-lbl"></span>
+      <button class="btn btn-s sm" style="margin-left:auto" onclick="clearAuth('d')">Logout</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Phone Number</div>
+      <div class="row"><label>Doctor Phone Number</label><input id="d-phone" type="text" placeholder="919300499440" /></div>
+      <button class="btn btn-p" onclick="doctorLogin()">Login / Register</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Quick Actions</div>
+      <button class="btn btn-s" onclick="call('GET','/api/doctor/profile',null,'d')">Get My Profile</button>
+    </div>
+  </div>
+
+  <!-- ─── DOCTOR REGISTER ─── -->
+  <div id="d-register" class="panel">
+    <div class="page-title">Doctor Registration</div>
+    <div class="page-sub">Submit profile and clinic availability</div>
+
+    <div class="card">
+      <div class="card-title">Professional Details</div>
+      <div class="g2">
+        <div class="row"><label>Full Name</label><input id="dr-name" placeholder="Dr. Priya Sharma" /></div>
+        <div class="row"><label>Registration Number</label><input id="dr-regnum" placeholder="MP/12345" /></div>
+        <div class="row"><label>Year of Registration</label><input id="dr-regyear" placeholder="2015" /></div>
+        <div class="row"><label>Specialization</label>
+          <select id="dr-spec">
+            <option value="cardiologist">Cardiologist</option>
+            <option value="dermatologist">Dermatologist</option>
+            <option value="ent">ENT</option>
+            <option value="general physician">General Physician</option>
+            <option value="gynaecologist">Gynaecologist</option>
+            <option value="neurologist">Neurologist</option>
+            <option value="ophthalmologist">Ophthalmologist</option>
+            <option value="orthopaedic">Orthopaedic</option>
+            <option value="paediatrician">Paediatrician</option>
+            <option value="psychiatrist">Psychiatrist</option>
+            <option value="urologist">Urologist</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Clinic Details</div>
+      <div class="g2">
+        <div class="row"><label>Clinic Name</label><input id="dr-clinic" placeholder="City Heart Clinic" /></div>
+        <div class="row"><label>Address</label><input id="dr-addr" placeholder="123 MG Road" /></div>
+        <div class="row"><label>State</label><input id="dr-state" value="madhya pradesh" /></div>
+        <div class="row"><label>City</label><input id="dr-city" value="indore" /></div>
+        <div class="row"><label>Pincode</label><input id="dr-pin" value="452001" /></div>
+        <div class="row"><label>Google Maps URL</label><input id="dr-maps" placeholder="https://maps.google.com/..." /></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Availability</div>
+      <div class="row"><label>Available Days</label>
+        <div class="checks" id="dr-days">
+          <label class="chk"><input type="checkbox" value="Mon">Mon</label>
+          <label class="chk"><input type="checkbox" value="Tue">Tue</label>
+          <label class="chk"><input type="checkbox" value="Wed" checked>Wed</label>
+          <label class="chk"><input type="checkbox" value="Thu">Thu</label>
+          <label class="chk"><input type="checkbox" value="Fri" checked>Fri</label>
+          <label class="chk"><input type="checkbox" value="Sat">Sat</label>
+          <label class="chk"><input type="checkbox" value="Sun">Sun</label>
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px"><label>Time Slots</label>
+        <div class="checks" id="dr-slots">
+          <label class="chk"><input type="checkbox" value="morning" checked>Morning (9–1PM)</label>
+          <label class="chk"><input type="checkbox" value="afternoon">Afternoon (1–5PM)</label>
+          <label class="chk"><input type="checkbox" value="evening" checked>Evening (5–9PM)</label>
+        </div>
+      </div>
+      <button class="btn btn-p" style="margin-top:12px" onclick="registerDoctor()">Submit Registration</button>
+    </div>
+  </div>
+
+  <!-- ─── DOCTOR APPOINTMENTS ─── -->
+  <div id="d-appts" class="panel">
+    <div class="page-title">Doctor Appointments</div>
+    <div class="page-sub">Confirm or reject patient requests</div>
+
+    <div class="card">
+      <button class="btn btn-p" onclick="loadDoctorAppts()">Load Appointments</button>
+    </div>
+
+    <div id="d-pend-card" class="card" style="display:none">
+      <div class="card-title">Pending <span class="badge" id="d-pend-cnt">0</span></div>
+      <div id="d-pend-list"></div>
+    </div>
+    <div id="d-conf-card" class="card" style="display:none">
+      <div class="card-title">Confirmed <span class="badge" id="d-conf-cnt">0</span></div>
+      <div id="d-conf-list"></div>
+    </div>
+    <div id="d-canc-card" class="card" style="display:none">
+      <div class="card-title">Cancelled <span class="badge badge-red" id="d-canc-cnt">0</span></div>
+      <div id="d-canc-list"></div>
+    </div>
+  </div>
+
+  <!-- ─── DOCTOR CLINIC & VACATION ─── -->
+  <div id="d-clinic" class="panel">
+    <div class="page-title">Clinic & Vacation</div>
+    <div class="page-sub">Update availability or set vacation</div>
+
+    <div class="card">
+      <div class="card-title">Update Availability (All Clinics)</div>
+      <div class="row"><label>Days</label>
+        <div class="checks">
+          <label class="chk"><input type="checkbox" class="av-day" value="Mon">Mon</label>
+          <label class="chk"><input type="checkbox" class="av-day" value="Tue">Tue</label>
+          <label class="chk"><input type="checkbox" class="av-day" value="Wed" checked>Wed</label>
+          <label class="chk"><input type="checkbox" class="av-day" value="Thu">Thu</label>
+          <label class="chk"><input type="checkbox" class="av-day" value="Fri" checked>Fri</label>
+          <label class="chk"><input type="checkbox" class="av-day" value="Sat">Sat</label>
+          <label class="chk"><input type="checkbox" class="av-day" value="Sun">Sun</label>
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px"><label>Slots</label>
+        <div class="checks">
+          <label class="chk"><input type="checkbox" class="av-slot" value="morning" checked>Morning</label>
+          <label class="chk"><input type="checkbox" class="av-slot" value="afternoon">Afternoon</label>
+          <label class="chk"><input type="checkbox" class="av-slot" value="evening" checked>Evening</label>
+        </div>
+      </div>
+      <button class="btn btn-p" style="margin-top:10px" onclick="updateAvailability()">Update</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Vacation Mode</div>
+      <div class="g2">
+        <div class="row"><label>Start Date</label><input id="vac-start" type="date" /></div>
+        <div class="row"><label>End Date</label><input id="vac-end" type="date" /></div>
+      </div>
+      <div class="flex" style="margin-top:10px">
+        <button class="btn btn-w" onclick="setVacation()">Set Vacation</button>
+        <button class="btn btn-s" onclick="call('DELETE','/api/doctor/vacation',null,'d')">Cancel Vacation</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── ADMIN PANEL ─── -->
+  <div id="a-panel" class="panel">
+    <div class="page-title">Admin Panel</div>
+    <div class="page-sub">Approve doctors and manage the platform</div>
+
+    <div class="card">
+      <div class="card-title">Admin Secret</div>
+      <div class="row"><label>INTERNAL_SECRET (from .env)</label><input id="adm-secret" type="password" placeholder="your internal secret" /></div>
+      <div class="flex">
+        <button class="btn btn-p" onclick="loadAdminStats()">Load Stats</button>
+        <button class="btn btn-s" onclick="loadPendingDoctors()">Pending Doctors</button>
+      </div>
+    </div>
+
+    <div id="adm-stats-card" class="card" style="display:none">
+      <div class="card-title">Platform Stats</div>
+      <div id="adm-stats" class="g3" style="gap:10px"></div>
+    </div>
+
+    <div id="adm-pend-card" class="card" style="display:none">
+      <div class="card-title">Pending Doctors</div>
+      <div id="adm-pend-list"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Set Premium Membership</div>
+      <div class="g2">
+        <div class="row"><label>Doctor ID (UUID)</label><input id="adm-mem-id" placeholder="paste doctor UUID" /></div>
+        <div class="row"><label>Action</label>
+          <select id="adm-mem-action">
+            <option value="true">Grant Premium</option>
+            <option value="false">Revoke Premium</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-p" onclick="setMembership()">Apply</button>
+    </div>
+  </div>
+
+  <!-- ─── INTERNAL ─── -->
+  <div id="i-panel" class="panel">
+    <div class="page-title">Internal / Cron</div>
+    <div class="page-sub">Manually trigger backend operations</div>
+
+    <div class="card">
+      <div class="card-title">Send Appointment Reminders</div>
+      <p style="color:var(--muted);font-size:12px;margin-bottom:10px">Sends reminders for confirmed appointments 1.5–2.5 hours away. Normally called by cron every 5 min.</p>
+      <div class="row"><label>Internal Secret</label><input id="int-secret" type="password" placeholder="your internal secret" /></div>
+      <button class="btn btn-p" onclick="triggerReminders()">Trigger Now</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Health Check</div>
+      <button class="btn btn-s" onclick="call('GET','/health')">GET /health</button>
+      &nbsp;
+      <button class="btn btn-s" onclick="call('GET','/docs')" >Open /docs ↗</button>
+    </div>
+  </div>
+
+</main>
+
+<!-- ════════════════ LOG PANEL ════════════════ -->
+<div class="log">
+  <div class="log-hdr">
+    <span>Response Log</span>
+    <button class="btn btn-s sm" onclick="clearLog()">Clear</button>
+  </div>
+  <div class="log-body" id="log-body">
+    <div style="text-align:center;color:var(--muted);padding:48px 16px;font-size:12px">Make an API call to see responses</div>
+  </div>
+</div>
+
+</div><!-- layout -->
+
+<script>
+// ════════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════════
+const S = {
+  p: { token: localStorage.getItem('p_tok'), phone: localStorage.getItem('p_ph') },
+  d: { token: localStorage.getItem('d_tok'), phone: localStorage.getItem('d_ph') },
+  sym: { step:1, fupCnt:0, docId:null, docName:null, date:null },
+  br:  { docId:null, docName:null, date:null },
+};
+
+function base(){ return document.getElementById('base-url').value.replace(/\/$/,''); }
+function admSecret(){ return document.getElementById('adm-secret').value.trim(); }
+function intSecret(){ return document.getElementById('int-secret').value.trim(); }
+
+// ════════════════════════════════════════════════════════
+// API CLIENT
+// ════════════════════════════════════════════════════════
+async function call(method, path, body=null, role=null){
+  const url = base() + path;
+  const headers = {'Content-Type':'application/json'};
+  let token = null;
+  if(role==='p') token = S.p.token;
+  else if(role==='d') token = S.d.token;
+  else if(typeof role==='string' && role.length>10) token = role; // raw secret passed
+  if(token) headers['Authorization'] = `Bearer ${token}`;
+
+  try{
+    const r = await fetch(url,{method,headers,body:body?JSON.stringify(body):null});
+    let data;
+    try{ data=await r.json(); }catch{ data={raw:await r.text()}; }
+    log(method,path,r.status,data);
+    return {ok:r.ok, status:r.status, data};
+  }catch(e){
+    log(method,path,0,{error:e.message});
+    return {ok:false,status:0,data:{error:e.message}};
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// LOG PANEL
+// ════════════════════════════════════════════════════════
+function log(method,path,status,data){
+  const body = document.getElementById('log-body');
+  const ph = body.querySelector('div[style*="text-align:center"]');
+  if(ph) ph.remove();
+  const ok = status>=200&&status<300;
+  const el = document.createElement('div');
+  el.className='le';
+  el.innerHTML=`
+    <div class="le-top">
+      <span class="method m-${method}">${method}</span>
+      <span class="le-path">${path}</span>
+      <span class="le-status ${ok?'ok':'err'}">${status||'ERR'}</span>
+    </div>
+    <pre>${JSON.stringify(data,null,2)}</pre>`;
+  body.insertBefore(el,body.firstChild);
+}
+function clearLog(){
+  document.getElementById('log-body').innerHTML=
+    '<div style="text-align:center;color:var(--muted);padding:48px 16px;font-size:12px">Make an API call to see responses</div>';
+}
+
+// ════════════════════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════════════════════
+document.querySelectorAll('.nav-item').forEach(el=>{
+  el.addEventListener('click',()=>{
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById(el.dataset.panel).classList.add('active');
+    refreshAuthBars();
+  });
+});
+
+function refreshAuthBars(){
+  const pb=document.getElementById('p-token-bar');
+  const psc=document.getElementById('p-session-card');
+  const db=document.getElementById('d-token-bar');
+  if(S.p.token){ pb.style.display='flex'; document.getElementById('p-phone-lbl').textContent=S.p.phone||''; psc.style.display='block'; }
+  else{ pb.style.display='none'; psc.style.display='none'; }
+  if(S.d.token){ db.style.display='flex'; document.getElementById('d-phone-lbl').textContent=S.d.phone||''; }
+  else db.style.display='none';
+}
+
+function clearAuth(role){
+  if(role==='p'){ S.p.token=null;S.p.phone=null;localStorage.removeItem('p_tok');localStorage.removeItem('p_ph'); }
+  else{ S.d.token=null;S.d.phone=null;localStorage.removeItem('d_tok');localStorage.removeItem('d_ph'); }
+  refreshAuthBars();
+}
+
+// ════════════════════════════════════════════════════════
+// PATIENT FLOWS
+// ════════════════════════════════════════════════════════
+
+async function patientLogin(){
+  const phone=document.getElementById('p-phone').value.trim();
+  const lang=document.getElementById('p-lang').value;
+  if(!phone) return alert('Enter phone number');
+  const r=await call('POST','/api/auth/patient/login',{phone_number:phone,language:lang});
+  if(r.ok){
+    S.p.token=r.data.access_token; S.p.phone=phone;
+    localStorage.setItem('p_tok',r.data.access_token);
+    localStorage.setItem('p_ph',phone);
+    document.getElementById('p-user-lbl').textContent = r.data.is_new_user ? '(new user — fill profile)' : '(returning user)';
+    refreshAuthBars();
+  }
+}
+
+async function saveProfile(){
+  const body={
+    full_name: document.getElementById('pf-name').value,
+    age: parseInt(document.getElementById('pf-age').value),
+    gender: document.getElementById('pf-gender').value,
+    state: document.getElementById('pf-state').value,
+    city: document.getElementById('pf-city').value,
+    pincode: document.getElementById('pf-pincode').value,
+  };
+  await call('POST','/api/patient/profile',body,'p');
+}
+
+// ─── Symptom Flow ───
+
+async function submitSymptoms(){
+  const txt=document.getElementById('sym-txt').value.trim();
+  if(!txt) return alert('Describe symptoms first');
+  if(!S.p.token) return alert('Login as patient first');
+  S.sym={step:1,fupCnt:0,docId:null,docName:null,date:null};
+  const r=await call('POST','/api/patient/symptoms',{symptoms_text:txt},'p');
+  if(!r.ok) return;
+  if(r.data.followup_question){ showFup(r.data); }
+  else if(r.data.doctors){ showDoctors('sym',r.data); }
+}
+
+async function submitFollowup(){
+  const ans=document.getElementById('fup-ans').value.trim();
+  if(!ans) return alert('Enter your answer');
+  const r=await call('POST','/api/patient/followup',{answer:ans},'p');
+  document.getElementById('fup-ans').value='';
+  if(!r.ok) return;
+  if(r.data.followup_question){ showFup(r.data); }
+  else if(r.data.doctors){ showDoctors('sym',r.data); }
+}
+
+function showFup(data){
+  S.sym.fupCnt++;
+  document.getElementById('fup-cnt').textContent=S.sym.fupCnt;
+  document.getElementById('fup-q').textContent=data.followup_question;
+  const ew=document.getElementById('fup-emergency');
+  if(data.emergency_warning){ ew.textContent=data.emergency_warning; ew.style.display='block'; }
+  else ew.style.display='none';
+  symStep(2);
+}
+
+function showDoctors(mode,data){
+  const msgs=data.messages||[];
+  if(mode==='sym'){
+    const rm=document.getElementById('sym-rec-msg');
+    if(msgs.length){ rm.textContent=msgs.join(' '); rm.style.display='block'; }
+    else rm.style.display='none';
+    const cont=document.getElementById('sym-doctors');
+    cont.innerHTML='';
+    (data.doctors||[]).forEach(doc=>{ cont.appendChild(docCard(doc,mode)); });
+    symStep(3);
+  } else {
+    const cont=document.getElementById('br-docs');
+    cont.innerHTML='';
+    (data.doctors||[]).forEach(doc=>{ cont.appendChild(docCard(doc,mode)); });
+    document.getElementById('br-docs-card').style.display='block';
+    ['br-dates-card','br-times-card','br-booked-card'].forEach(id=>document.getElementById(id).style.display='none');
+  }
+}
+
+function docCard(doc,mode){
+  const el=document.createElement('div');
+  el.className='ic';
+  el.innerHTML=`
+    <h4>${doc.name} ${doc.is_member?'⭐':''}</h4>
+    <p>${doc.specialization} · ${doc.clinic_name}, ${doc.city}</p>
+    <p>Availability: ${doc.availability_string||'—'}</p>
+    <div class="acts">
+      <button class="btn btn-p sm" onclick="selectDoctor('${doc.id}','${doc.name.replace(/'/g,"\\'")}','${mode}')">Book →</button>
+    </div>`;
+  return el;
+}
+
+async function selectDoctor(id,name,mode){
+  if(mode==='sym'){ S.sym.docId=id; S.sym.docName=name; }
+  else { S.br.docId=id; S.br.docName=name; }
+  const r=await call('POST','/api/patient/select-doctor',{doctor_id:id},'p');
+  if(!r.ok) return;
+  const dates=r.data.available_dates||[];
+  if(mode==='sym'){
+    document.getElementById('sym-doc-name').textContent=name;
+    const el=document.getElementById('sym-dates'); el.innerHTML='';
+    dates.forEach(d=>{
+      const b=document.createElement('button'); b.className='opt';
+      b.innerHTML=`<strong>${d.display}</strong><br><small>${(d.windows_display||[]).join(', ')}</small>`;
+      b.onclick=()=>selectDate(d.date,d.display,'sym');
+      el.appendChild(b);
+    });
+    symStep(4);
+  } else {
+    document.getElementById('br-doc-name').textContent=name;
+    const el=document.getElementById('br-dates'); el.innerHTML='';
+    dates.forEach(d=>{
+      const b=document.createElement('button'); b.className='opt';
+      b.innerHTML=`<strong>${d.display}</strong><br><small>${(d.windows_display||[]).join(', ')}</small>`;
+      b.onclick=()=>selectDate(d.date,d.display,'br');
+      el.appendChild(b);
+    });
+    document.getElementById('br-dates-card').style.display='block';
+    document.getElementById('br-times-card').style.display='none';
+    document.getElementById('br-booked-card').style.display='none';
+  }
+}
+
+async function selectDate(dateStr,display,mode){
+  if(mode==='sym') S.sym.date=dateStr;
+  else S.br.date=dateStr;
+  const docId=mode==='sym'?S.sym.docId:S.br.docId;
+  const r=await call('POST','/api/patient/select-date',{doctor_id:docId,date:dateStr},'p');
+  if(!r.ok) return;
+  const windows=r.data.windows||[];
+  if(mode==='sym'){
+    document.getElementById('sym-date-lbl').textContent=display;
+    const el=document.getElementById('sym-times'); el.innerHTML='';
+    windows.forEach(w=>{
+      const b=document.createElement('button'); b.className='opt';
+      b.textContent=w.label;
+      b.onclick=()=>bookAppt(S.sym.docId,dateStr,w.window,'sym');
+      el.appendChild(b);
+    });
+    symStep(5);
+  } else {
+    const el=document.getElementById('br-times'); el.innerHTML='';
+    windows.forEach(w=>{
+      const b=document.createElement('button'); b.className='opt';
+      b.textContent=w.label;
+      b.onclick=()=>bookAppt(S.br.docId,dateStr,w.window,'br');
+      el.appendChild(b);
+    });
+    document.getElementById('br-times-card').style.display='block';
+  }
+}
+
+async function bookAppt(docId,dateStr,slotWindow,mode){
+  const d=new Date(dateStr+'T12:00:00');
+  const day=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][d.getDay()];
+  const r=await call('POST','/api/patient/book',{doctor_id:docId,slot_day:day,slot_window:slotWindow},'p');
+  if(!r.ok) return;
+  const msg=r.data.message||'Appointment requested!';
+  if(mode==='sym'){
+    document.getElementById('sym-booked-msg').textContent=msg;
+    symStep(6);
+  } else {
+    document.getElementById('br-booked-msg').textContent=msg;
+    document.getElementById('br-booked-card').style.display='block';
+    document.getElementById('br-times-card').style.display='none';
+  }
+}
+
+function symStep(n){
+  for(let i=1;i<=6;i++){
+    const card=document.getElementById(`ss${i}`);
+    const step=document.getElementById(`st${i}`);
+    if(card) card.style.display = i===n?'block':'none';
+    if(step){ step.classList.remove('active','done'); if(i===n)step.classList.add('active'); else if(i<n)step.classList.add('done'); }
+  }
+  S.sym.step=n;
+}
+
+function resetSymFlow(){
+  document.getElementById('sym-txt').value='';
+  document.getElementById('fup-ans').value='';
+  S.sym={step:1,fupCnt:0,docId:null,docName:null,date:null};
+  symStep(1);
+}
+
+// ─── Browse ───
+
+async function loadSpecialties(){
+  if(!S.p.token) return alert('Login as patient first');
+  const r=await call('GET','/api/patient/specialties',null,'p');
+  if(!r.ok) return;
+  const pills=document.getElementById('spec-pills'); pills.innerHTML='';
+  (r.data.specialties||[]).forEach(s=>{
+    const b=document.createElement('button'); b.className='pill';
+    b.textContent=`${s.display_name} (${s.doctor_count})`;
+    b.onclick=()=>browseSpec(s.specialization);
+    pills.appendChild(b);
+  });
+  if(!(r.data.specialties||[]).length) pills.innerHTML='<span style="color:var(--muted);font-size:12px">No specialties found near your location</span>';
+}
+
+async function browseSpec(spec){
+  const r=await call('POST','/api/patient/browse-specialty',{specialization:spec},'p');
+  if(!r.ok) return;
+  showDoctors('br',r.data);
+}
+
+function resetBrowse(){
+  ['br-docs-card','br-dates-card','br-times-card','br-booked-card'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('spec-pills').innerHTML='';
+  S.br={docId:null,docName:null,date:null};
+}
+
+// ─── Appointments ───
+
+async function loadPatientAppts(){
+  const r=await call('GET','/api/patient/appointments',null,'p');
+  if(!r.ok) return;
+  const list=document.getElementById('p-appts-list'); list.innerHTML='';
+  const appts=r.data.appointments||[];
+  if(!appts.length){ list.innerHTML=`<p style="color:var(--muted)">${r.data.message||'No appointments'}</p>`; return; }
+  appts.forEach(a=>{
+    const el=document.createElement('div'); el.className='ic';
+    const chipClass={pending:'c-p',confirmed:'c-c',cancelled:'c-x'}[a.status]||'c-p';
+    el.innerHTML=`
+      <h4>${a.doctor_name} <span class="chip ${chipClass}">${a.status}</span></h4>
+      <p>${a.slot_day}, ${a.slot_window}${a.clinic_name?' · '+a.clinic_name:''}</p>
+      ${a.appointment_time?`<p style="color:var(--accent)">📅 ${new Date(a.appointment_time).toLocaleString()}</p>`:''}
+      ${a.symptoms_summary?`<p>${a.symptoms_summary}</p>`:''}
+      <div class="acts">
+        ${a.status!=='cancelled'?`<button class="btn btn-d sm" onclick="cancelPatientAppt('${a.id}')">Cancel</button>`:''}
+      </div>`;
+    list.appendChild(el);
+  });
+}
+
+async function cancelPatientAppt(id){
+  if(!confirm('Cancel this appointment?')) return;
+  const r=await call('POST','/api/patient/cancel',{appointment_id:id},'p');
+  if(r.ok) loadPatientAppts();
+}
+
+// ════════════════════════════════════════════════════════
+// DOCTOR FLOWS
+// ════════════════════════════════════════════════════════
+
+async function doctorLogin(){
+  const phone=document.getElementById('d-phone').value.trim();
+  if(!phone) return alert('Enter phone number');
+  const r=await call('POST','/api/auth/doctor/login',{phone_number:phone});
+  if(r.ok){
+    S.d.token=r.data.access_token; S.d.phone=phone;
+    localStorage.setItem('d_tok',r.data.access_token);
+    localStorage.setItem('d_ph',phone);
+    refreshAuthBars();
+  }
+}
+
+async function registerDoctor(){
+  const days=[...document.querySelectorAll('#dr-days input:checked')].map(el=>el.value);
+  const slots=[...document.querySelectorAll('#dr-slots input:checked')].map(el=>el.value);
+  const body={
+    name:document.getElementById('dr-name').value,
+    registration_number:document.getElementById('dr-regnum').value,
+    year_register:document.getElementById('dr-regyear').value,
+    specialization:document.getElementById('dr-spec').value,
+    clinic_name:document.getElementById('dr-clinic').value,
+    address:document.getElementById('dr-addr').value,
+    state:document.getElementById('dr-state').value,
+    city:document.getElementById('dr-city').value,
+    pincode:document.getElementById('dr-pin').value,
+    maps:document.getElementById('dr-maps').value,
+    available_days:days,
+    time_slots:slots,
+  };
+  await call('POST','/api/doctor/register',body,'d');
+}
+
+async function loadDoctorAppts(){
+  const r=await call('GET','/api/doctor/appointments',null,'d');
+  if(!r.ok) return;
+
+  const renderList=(items,listId,canConfirm,canReject)=>{
+    const el=document.getElementById(listId); el.innerHTML='';
+    if(!items.length){ el.innerHTML='<p style="color:var(--muted);font-size:12px">None</p>'; return; }
+    items.forEach(a=>{
+      const card=document.createElement('div'); card.className='ic';
+      card.innerHTML=`
+        <h4>${a.patient_name} · ${a.patient_age}y ${a.patient_gender}</h4>
+        <p>${a.slot_day}, ${a.slot_window} · Urgency: <strong>${a.urgency}</strong></p>
+        ${a.symptoms_summary?`<p>${a.symptoms_summary}</p>`:''}
+        ${a.appointment_time?`<p style="color:var(--accent)">📅 ${new Date(a.appointment_time).toLocaleString()}</p>`:''}
+        <div class="acts">
+          ${canConfirm?`<button class="btn btn-p sm" onclick="confirmAppt('${a.id}')">✅ Confirm</button>`:''}
+          ${canReject?`<button class="btn btn-d sm" onclick="rejectAppt('${a.id}')">❌ Reject</button>`:''}
+        </div>`;
+      el.appendChild(card);
+    });
+  };
+
+  const pend=r.data.pending||[];
+  const conf=r.data.confirmed||[];
+  const canc=r.data.cancelled||[];
+
+  document.getElementById('d-pend-cnt').textContent=pend.length;
+  document.getElementById('d-conf-cnt').textContent=conf.length;
+  document.getElementById('d-canc-cnt').textContent=canc.length;
+
+  renderList(pend,'d-pend-list',true,true);
+  renderList(conf,'d-conf-list',false,true);
+  renderList(canc,'d-canc-list',false,false);
+
+  ['d-pend-card','d-conf-card','d-canc-card'].forEach(id=>document.getElementById(id).style.display='block');
+}
+
+async function confirmAppt(id){
+  const r=await call('POST','/api/doctor/confirm',{appointment_id:id},'d');
+  if(r.ok) loadDoctorAppts();
+}
+async function rejectAppt(id){
+  const r=await call('POST','/api/doctor/reject',{appointment_id:id},'d');
+  if(r.ok) loadDoctorAppts();
+}
+
+async function updateAvailability(){
+  const days=[...document.querySelectorAll('.av-day:checked')].map(el=>el.value);
+  const slots=[...document.querySelectorAll('.av-slot:checked')].map(el=>el.value);
+  await call('POST','/api/doctor/update-availability',{available_days:days,time_slots:slots,update_all:true},'d');
+}
+
+async function setVacation(){
+  const start=document.getElementById('vac-start').value;
+  const end=document.getElementById('vac-end').value;
+  if(!start||!end) return alert('Select both start and end dates');
+  await call('POST','/api/doctor/vacation',{vacation_start:start,vacation_end:end},'d');
+}
+
+// ════════════════════════════════════════════════════════
+// ADMIN FLOWS
+// ════════════════════════════════════════════════════════
+
+async function loadAdminStats(){
+  const r=await call('GET','/api/admin/stats',null,admSecret());
+  if(!r.ok) return;
+  const el=document.getElementById('adm-stats'); el.innerHTML='';
+  Object.entries(r.data).forEach(([k,v])=>{
+    const div=document.createElement('div'); div.className='stat';
+    div.innerHTML=`<div class="val">${v??'—'}</div><div class="lbl">${k.replace(/_/g,' ')}</div>`;
+    el.appendChild(div);
+  });
+  document.getElementById('adm-stats-card').style.display='block';
+}
+
+async function loadPendingDoctors(){
+  const r=await call('GET','/api/admin/pending-doctors',null,admSecret());
+  if(!r.ok) return;
+  const list=document.getElementById('adm-pend-list'); list.innerHTML='';
+  const docs=r.data.pending_doctors||[];
+  if(!docs.length){ list.innerHTML='<p style="color:var(--muted)">No pending doctors 🎉</p>'; }
+  else docs.forEach(doc=>{
+    const clinic=(doc.clinics||[])[0]||{};
+    const el=document.createElement('div'); el.className='ic';
+    el.innerHTML=`
+      <h4>${doc.name||'(unnamed)'}</h4>
+      <p>${doc.specialization||'—'} · ${clinic.city||''}, ${clinic.state||''}</p>
+      <p style="font-size:11px;color:var(--muted)">${doc.id}</p>
+      <div class="acts">
+        <button class="btn btn-p sm" onclick="approveDoc('${doc.id}',true)">✅ Approve</button>
+        <button class="btn btn-d sm" onclick="approveDoc('${doc.id}',false)">❌ Reject</button>
+        <button class="btn btn-s sm" onclick="document.getElementById('adm-mem-id').value='${doc.id}'">Copy ID</button>
+      </div>`;
+    list.appendChild(el);
+  });
+  document.getElementById('adm-pend-card').style.display='block';
+}
+
+async function approveDoc(id,approved){
+  const r=await call('POST','/api/admin/approve-doctor',{doctor_id:id,approved,notify:false},admSecret());
+  if(r.ok) loadPendingDoctors();
+}
+
+async function setMembership(){
+  const id=document.getElementById('adm-mem-id').value.trim();
+  const isMember=document.getElementById('adm-mem-action').value==='true';
+  if(!id) return alert('Enter doctor ID');
+  await call('POST','/api/admin/set-membership',{doctor_id:id,is_member:isMember,notify:false},admSecret());
+}
+
+// ════════════════════════════════════════════════════════
+// INTERNAL
+// ════════════════════════════════════════════════════════
+async function triggerReminders(){
+  await call('POST','/internal/send-reminders',{},intSecret());
+}
+
+// ════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════
+refreshAuthBars();
+// restore step 1 visibility
+symStep(1);
+</script>
+</body>
+</html>
